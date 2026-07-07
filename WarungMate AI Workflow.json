@@ -1,0 +1,755 @@
+{
+  "name": "WarungMate AI",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body?.message || $json.message?.text }}",
+        "options": {
+          "systemMessage": "=You are WarungMate AI, a helpful, fast, and friendly AI Assistant designed specifically to help traditional grocery store (warung kelontong) owners manage inventory, track sales, and monitor daily business performance with zero friction.\n\nYour communication style must always be clear, concise, structured, and practical. Avoid complex technical terminology. Address the user warmly using culturally friendly terms like \"Bos\" or \"Juragan\" where natural. Keep your answers brief and to the point, understanding that store owners are busy serving customers.\n\nCore Operational Rules:\n1. Autonomous Tool Execution: You have access to database/spreadsheet tools (`baca_stok_barang`, `update_stok_barang`, `catat_log_transaksi`). Never ask the user's permission before executing a tool—just do it automatically to fulfill their request.\n2. Transaction Handling: When the user reports sold items (keluar) or restocked items (masuk):\n   - First, call `baca_stok_barang` to verify current stock and match exact product names.\n   - Accurately calculate the new stock level (subtract for sales, add for restock).\n   - Call `update_stok_barang` to update the inventory sheet.\n   - Call `catat_log_transaksi` to record the historical transaction log.\n   - Confirm the action concisely with the updated stock balance.\n3. Fuzzy Matching & Common Sense: If the user makes typos or uses informal names (e.g., typing \"indomi\" for \"indomie goreng\" or \"bimoli\" for \"minyak goreng bimoli 1l\"), use logical inference to match existing inventory. Do not add new items unless explicitly asked.\n4. Business Empowerment: When asked for summaries, provide actionable insights such as low-stock alerts, daily revenue estimation, or fast-moving products.\n\nLanguage Protocol:\nAlways detect the user's language or local dialect from their message, and reply in that exact language/style. If you cannot reliably detect the language, default to casual and polite Bahasa Indonesia."
+        }
+      },
+      "id": "ae4473ec-d072-452c-ac2f-4c8561136e10",
+      "name": "Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        960,
+        176
+      ],
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "path": "/mategroup/warungmate/data",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        352,
+        608
+      ],
+      "id": "472fb673-b6c3-4423-899d-0e7d5b38575d",
+      "name": "Webhook",
+      "webhookId": "4bfd5ee6-5006-4795-8499-a1a502b9b8f9"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1248,
+        608
+      ],
+      "id": "1f38ea05-2262-4976-a35a-3669a377cb81",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {
+          "maxOutputTokens": 2048
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        576,
+        400
+      ],
+      "id": "668bf742-b9d7-4862-a056-a956a6edf06e",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "J72lTEeWIZ09LWel",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body?.sessionId || $json.message?.chat?.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        704,
+        400
+      ],
+      "id": "d4a0092c-b239-4c85-8f3b-b37bb074a257",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "options": {
+          "timezone": "Asia/Jakarta"
+        }
+      },
+      "type": "n8n-nodes-base.dateTimeTool",
+      "typeVersion": 2,
+      "position": [
+        832,
+        400
+      ],
+      "id": "31ac1cf5-dfb3-44d8-96bb-60f1b9124646",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        960,
+        400
+      ],
+      "id": "1e2828a2-67f1-4eab-9ba8-0da7e01bb9ea",
+      "name": "Calculator"
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/customsearch/v1",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "key",
+              "value": "AIzaSyC2PCgf4XP0ninIMV44L-e_dtBdPYpvP3M"
+            },
+            {
+              "name": "cx",
+              "value": "e3616d8474a7c4fd5"
+            },
+            {
+              "name": "num",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        1088,
+        400
+      ],
+      "id": "e80935be-f494-4772-afa5-36c803c0cd5b",
+      "name": "Google Search"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BW4zFsBjP54PCDJ-jQRrNqHPMfA_qVePI9uRqCm48FA",
+          "mode": "list",
+          "cachedResultName": "WarungMate",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BW4zFsBjP54PCDJ-jQRrNqHPMfA_qVePI9uRqCm48FA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "inventaris",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BW4zFsBjP54PCDJ-jQRrNqHPMfA_qVePI9uRqCm48FA/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1216,
+        400
+      ],
+      "id": "3e2a31aa-1fb2-4592-8d1e-7a71aa0417f1",
+      "name": "baca_stok_barang",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "in3LwnKKNtxpDiYW",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1BW4zFsBjP54PCDJ-jQRrNqHPMfA_qVePI9uRqCm48FA",
+          "mode": "list",
+          "cachedResultName": "WarungMate",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BW4zFsBjP54PCDJ-jQRrNqHPMfA_qVePI9uRqCm48FA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "inventaris",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BW4zFsBjP54PCDJ-jQRrNqHPMfA_qVePI9uRqCm48FA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nama_produk": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('nama_produk__using_to_match_', ``, 'string') }}",
+            "kategori": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('kategori', ``, 'string') }}",
+            "stok_sekarang": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('stok_sekarang', ``, 'string') }}",
+            "satuan": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('satuan', ``, 'string') }}",
+            "harga_satuan": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('harga_satuan', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "nama_produk"
+          ],
+          "schema": [
+            {
+              "id": "nama_produk",
+              "displayName": "nama_produk",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "kategori",
+              "displayName": "kategori",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "stok_sekarang",
+              "displayName": "stok_sekarang",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "satuan",
+              "displayName": "satuan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "harga_satuan",
+              "displayName": "harga_satuan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1344,
+        400
+      ],
+      "id": "fdcb65fd-d158-45a5-8c43-f7d519f375cf",
+      "name": "update_stok_barang",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "in3LwnKKNtxpDiYW",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1BW4zFsBjP54PCDJ-jQRrNqHPMfA_qVePI9uRqCm48FA",
+          "mode": "list",
+          "cachedResultName": "WarungMate",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BW4zFsBjP54PCDJ-jQRrNqHPMfA_qVePI9uRqCm48FA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 336565991,
+          "mode": "list",
+          "cachedResultName": "log_transaksi",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BW4zFsBjP54PCDJ-jQRrNqHPMfA_qVePI9uRqCm48FA/edit#gid=336565991"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('timestamp', ``, 'string') }}",
+            "nama_produk": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('nama_produk', ``, 'string') }}",
+            "jumlah": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('jumlah', ``, 'string') }}",
+            "jenis": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('jenis', ``, 'string') }}",
+            "catatan": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('catatan', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nama_produk",
+              "displayName": "nama_produk",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "jumlah",
+              "displayName": "jumlah",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "jenis",
+              "displayName": "jenis",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "catatan",
+              "displayName": "catatan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1472,
+        400
+      ],
+      "id": "32d86a80-9318-40af-9053-2c3d74a19a97",
+      "name": "catat_log_transaksi",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "in3LwnKKNtxpDiYW",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        352,
+        288
+      ],
+      "id": "d278b0e7-0df2-4c7c-beb7-7e94839b02cf",
+      "name": "Telegram Trigger",
+      "webhookId": "bc42ea95-289e-4fe4-be2f-525b1e630900",
+      "credentials": {
+        "telegramApi": {
+          "id": "QVZym8ijVuSAGTY7",
+          "name": "WarungMate"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1680,
+        288
+      ],
+      "id": "837f6e99-bdc6-4568-9764-26c0101ab3bd",
+      "name": "Send a text message",
+      "webhookId": "4c37277c-442d-43a2-883e-444d9e3c7cb6",
+      "credentials": {
+        "telegramApi": {
+          "id": "QVZym8ijVuSAGTY7",
+          "name": "WarungMate"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BW4zFsBjP54PCDJ-jQRrNqHPMfA_qVePI9uRqCm48FA",
+          "mode": "list",
+          "cachedResultName": "WarungMate",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BW4zFsBjP54PCDJ-jQRrNqHPMfA_qVePI9uRqCm48FA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 336565991,
+          "mode": "list",
+          "cachedResultName": "log_transaksi",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BW4zFsBjP54PCDJ-jQRrNqHPMfA_qVePI9uRqCm48FA/edit#gid=336565991"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        800,
+        608
+      ],
+      "id": "23d84783-12fd-4e9e-b399-5f9912d0caf9",
+      "name": "log_transaksi",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "in3LwnKKNtxpDiYW",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BW4zFsBjP54PCDJ-jQRrNqHPMfA_qVePI9uRqCm48FA",
+          "mode": "list",
+          "cachedResultName": "WarungMate",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BW4zFsBjP54PCDJ-jQRrNqHPMfA_qVePI9uRqCm48FA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "inventaris",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BW4zFsBjP54PCDJ-jQRrNqHPMfA_qVePI9uRqCm48FA/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        576,
+        608
+      ],
+      "id": "f205f841-7379-4e8a-b569-188b2eb67866",
+      "name": "inventaris",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "in3LwnKKNtxpDiYW",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const inventaris = $('inventaris').all().map(item => item.json);\nconst logTransaksi = $('log_transaksi').all().map(item => item.json);\n\nreturn {\n  inventaris,\n  logTransaksi,\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        608
+      ],
+      "id": "165495bd-1818-439c-b614-416e2843a607",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {
+    "Telegram Trigger": [
+      {
+        "json": {
+          "update_id": 702366052,
+          "message": {
+            "message_id": 4,
+            "from": {
+              "id": 871524052,
+              "is_bot": false,
+              "first_name": "Bagus Angkasawan",
+              "last_name": "Sumantri Putra",
+              "username": "bagusasp01",
+              "language_code": "en"
+            },
+            "chat": {
+              "id": 871524052,
+              "first_name": "Bagus Angkasawan",
+              "last_name": "Sumantri Putra",
+              "username": "bagusasp01",
+              "type": "private"
+            },
+            "date": 1783352218,
+            "text": "/start",
+            "entities": [
+              {
+                "offset": 0,
+                "length": 6,
+                "type": "bot_command"
+              }
+            ]
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "connection": "upgrade",
+            "host": "n8n.mategroup.web.id",
+            "x-real-ip": "172.70.208.115",
+            "x-forwarded-for": "2a06:98c0:3600::103, 172.70.208.115",
+            "x-forwarded-proto": "https",
+            "postman-token": "8c45cfc6-80c8-46fb-8e92-f4178a84c9db",
+            "cf-ew-via": "15",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-connecting-ip": "2a06:98c0:3600::103",
+            "cf-ray": "a173fb87ee55fd6b-SIN",
+            "accept-encoding": "gzip, br",
+            "accept": "*/*",
+            "cache-control": "no-cache",
+            "user-agent": "PostmanRuntime/7.54.0",
+            "cf-worker": "mategroup.id",
+            "cf-ipcountry": "SG"
+          },
+          "params": {},
+          "query": {},
+          "body": {},
+          "webhookUrl": "https://n8n.mategroup.web.id/webhook/mategroup/warungmate/data",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "inventaris",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Search": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "baca_stok_barang": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "update_stok_barang": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "catat_log_transaksi": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        []
+      ]
+    },
+    "inventaris": {
+      "main": [
+        [
+          {
+            "node": "log_transaksi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "log_transaksi": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "36af9e77-7d68-49b7-a8fc-adbf7332ad0b",
+  "meta": {
+    "templateId": "self-building-ai-agent",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "84b46cf30398be327ac608413124887f3eaef39cc96f38c6723e0f95a5c3b7d9"
+  },
+  "nodeGroups": [],
+  "id": "bCxQ1sx8diQZO4ZQ",
+  "tags": []
+}

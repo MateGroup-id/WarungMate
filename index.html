@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="dicoding:email" content="bagusasp01@gmail.com">
+  <title>WarungMate Dashboard</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body>
+
+<div id="pageLoadingOverlay" class="page-loading-overlay" aria-live="polite" aria-busy="true">
+  <div class="page-loading-card">
+    <div class="page-loading-brand">
+      <span>WarungMate</span>
+    </div>
+    <div class="page-loading-spinner" aria-hidden="true"></div>
+    <p>Menyiapkan dashboard dan memuat data dari API...</p>
+    <div class="page-loading-bar" aria-hidden="true">
+      <span></span>
+    </div>
+  </div>
+</div>
+
+<main class="page">
+  <h1>WarungMate Dashboard</h1>
+  <p class="subtitle">Pantau inventaris dan log transaksi warung secara cepat, dengan tampilan yang nyaman.</p>
+
+  <div class="toolbar">
+    <button id="refreshButton" type="button">Refresh Data</button>
+
+    <div id="loadingState" class="loading-indicator is-hidden" aria-live="polite" aria-busy="true">
+      <span class="spinner"></span>
+      <span id="loadingText">Memuat data dari API...</span>
+    </div>
+  </div>
+
+  <div class="cards">
+      <div class="card">
+          <h3>Total Produk</h3>
+          <div id="totalProduk" class="card-value">0</div>
+      </div>
+
+      <div class="card">
+          <h3>Total Transaksi</h3>
+          <div id="totalTransaksi" class="card-value">0</div>
+      </div>
+  </div>
+
+  <div class="analytics card">
+    <div class="analytics-header">
+      <div>
+        <h2>Revenue View</h2>
+        <p class="layout-note">Data revenue dihitung dari transaksi keluar berdasarkan harga produk di inventaris.</p>
+      </div>
+
+      <div class="segmented-control" role="tablist" aria-label="Mode chart revenue">
+        <button id="viewRevenue" type="button" class="segment is-active" aria-pressed="true">Revenue</button>
+        <button id="viewQuantity" type="button" class="segment" aria-pressed="false">Qty Terjual</button>
+      </div>
+    </div>
+
+    <div class="filters" aria-label="Filter data analitik">
+      <label class="filter-group">
+        <span>Periode</span>
+        <select id="filterPeriod">
+          <option value="all">Semua waktu</option>
+          <option value="7d">7 hari terakhir</option>
+          <option value="30d">30 hari terakhir</option>
+          <option value="90d">90 hari terakhir</option>
+        </select>
+      </label>
+
+      <label class="filter-group">
+        <span>Kategori</span>
+        <select id="filterCategory">
+          <option value="all">Semua kategori</option>
+        </select>
+      </label>
+
+      <label class="filter-group">
+        <span>Jenis Transaksi</span>
+        <select id="filterType">
+          <option value="all">Semua jenis</option>
+          <option value="masuk">Masuk</option>
+          <option value="keluar">Keluar</option>
+        </select>
+      </label>
+
+      <button id="resetFilters" type="button" class="filter-reset">Reset Filter</button>
+    </div>
+
+    <div class="analytics-summary">
+      <div class="summary-item">
+        <span>Total Revenue</span>
+        <strong id="totalRevenue">Rp 0</strong>
+      </div>
+      <div class="summary-item">
+        <span>Total Barang Keluar</span>
+        <strong id="totalQtyOut">0</strong>
+      </div>
+      <div class="summary-item">
+        <span>Produk Terlaris</span>
+        <strong id="topProduct">-</strong>
+      </div>
+    </div>
+
+    <div id="analyticsChart" class="chart" aria-live="polite"></div>
+  </div>
+
+  <p class="layout-note">Geser tabel ke samping untuk melihat seluruh data.</p>
+
+  <h2>Inventaris</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+      <tr>
+          <th>Produk</th>
+          <th>Kategori</th>
+          <th>Stok</th>
+          <th>Satuan</th>
+          <th>Harga</th>
+      </tr>
+      </thead>
+
+      <tbody id="inventarisBody"></tbody>
+    </table>
+  </div>
+
+  <h2>Log Transaksi</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+      <tr>
+          <th>Waktu</th>
+          <th>Produk</th>
+          <th>Jumlah</th>
+          <th>Jenis</th>
+          <th>Catatan</th>
+      </tr>
+      </thead>
+
+      <tbody id="transaksiBody"></tbody>
+    </table>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<script src="./app.js" defer></script>
+
+</body>
+</html>
